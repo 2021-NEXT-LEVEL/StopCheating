@@ -26,13 +26,13 @@ def askFinishExam():
 def alert(case):
     now = datetime.now()
     if case == 1:
-        #tkinter.messagebox.showinfo("Alert", "두 명 이상 감지되었습니다.")
+        tkinter.messagebox.showinfo("Alert", "두 명 이상 감지되었습니다.")
         print("alert log[2명이상] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
     elif case == 2:
-        #tkinter.messagebox.showinfo("Alert", "고개 돌림이 감지되었습니다.")
+        tkinter.messagebox.showinfo("Alert", "고개 돌림이 감지되었습니다.")
         print("alert log[고개돌림] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
     elif case == 3:
-        #tkinter.messagebox.showinfo("Alert", "대화가 감지되었습니다.")
+        tkinter.messagebox.showinfo("Alert", "대화가 감지되었습니다.")
         print("alert log[대화] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
     elif case == 4:
         tkinter.messagebox.showinfo("Alert", "화면 밖 응시가 감지되었습니다.")
@@ -52,11 +52,11 @@ def get_gaze_ratio(eye_points, facial_landmarks, frame, gray):
                                np.int32)
 
     # 기존 웹캠 이미지에서 eye point를 사용하여 눈 영역 남기고 모두 제거
-    height, width, _ = frame.shape  # frame 크기 저장 2차원 저장
-    mask = np.zeros((height, width), np.uint8)  # height x width 사이즈의 0행렬
-    cv.polylines(mask, [left_eye_region], True, 255, 2)  # mask 이미지에 왼쪽 눈 좌표에 Black 도형
-    cv.fillPoly(mask, [left_eye_region], 255)  # 왼쪽 눈 좌표에 맞는 색칠된 Black 도형
-    eye = cv.bitwise_and(gray, gray, mask=mask)  # gray 이미지에 눈만 칠해진 mask와 and연산을 해서 눈 이미지만 남김
+    height, width, _ = frame.shape  
+    mask = np.zeros((height, width), np.uint8)  
+    cv.polylines(mask, [left_eye_region], True, 255, 2)  
+    cv.fillPoly(mask, [left_eye_region], 255)  
+    eye = cv.bitwise_and(gray, gray, mask=mask)  
 
     # 왼쪽 눈의 각 꼭짓점 좌표 저장
     min_x = np.min(left_eye_region[:, 0])
@@ -86,10 +86,12 @@ def get_gaze_ratio(eye_points, facial_landmarks, frame, gray):
 
 # [시험 시작] 버튼 클릭 시 부정행위 감지 프로그램 시작
 def startExam():
+    # dlib를 이용한 68 facial landmark points 불러오기
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
     cap = cv.VideoCapture(0)
 
+    # 68개 point에서 해당 얼굴 위치 point 저장 
     ALL = list(range(0, 68))
     RIGHT_EYEBROW = list(range(17, 22))
     LEFT_EYEBROW = list(range(22, 27))
@@ -99,21 +101,24 @@ def startExam():
     MOUTH_OUTLINE = list(range(48, 61))
     MOUTH_INNER = list(range(61, 68))
     JAWLINE = list(range(0, 17))
-
     index = ALL
 
+    # 입 모양 갑지에 사용할 변수 저장
     up_lip_x, up_lip_y, down_lip_x, down_lip_y = 0, 0, 0, 0
     right_lip_x, right_lip_y, left_lip_x, left_lip_y = 0, 0, 0, 0
 
+    # 카메라 실행
     while True:
         ret, img_frame = cap.read()
         img_gray = cv.cvtColor(img_frame, cv.COLOR_BGR2GRAY)
         dets = detector(img_gray, 1)
 
         for face in dets:
-            if len(dets) > 1:  # case == 1 -> 두 명 이상 감지
+            # 한 화면 내 2명 이상 감지
+            if len(dets) > 1: 
                 alert(1)
-            shape = predictor(img_frame, face)  # 얼굴에서 68개 점 찾기
+        
+            shape = predictor(img_frame, face)  # 얼굴에서 68개 points 찾기
             list_points = []
             for p in shape.parts():
                 list_points.append([p.x, p.y])
@@ -127,36 +132,37 @@ def startExam():
 
             for i, pt in enumerate(list_points[index]):
                 pt_pos = (pt[0], pt[1])
-                if num == 29:
+                if num == 29:  # 코
                     nose_x = pt_pos[0]
                     nose_y = pt_pos[1]
-                if num == 37 or num == 40:
+                if num == 37 or num == 40:  # 왼쪽 눈
                     left_eye_x = left_eye_x + pt_pos[0]
                     left_eye_y = left_eye_y + pt_pos[1]
-                if num == 41:
+                if num == 41: 
                     left_eye_x = left_eye_x // 2
                     left_eye_y = left_eye_y // 2
-                if num == 44 or num == 47:
+                if num == 44 or num == 47:  # 오른쪽 눈
                     right_eye_x = right_eye_x + pt_pos[0]
                     right_eye_y = right_eye_y + pt_pos[1]
                 if num == 48:
                     right_eye_x = right_eye_x // 2
                     right_eye_y = right_eye_y // 2
-                if (i == 52):
+                if (i == 52):  # 윗입술
                     up_lip_x = pt_pos[0]
                     up_lip_y = pt_pos[1]
-                if (i == 58):
+                if (i == 58):  # 아랫입술
                     down_lip_x = pt_pos[0]
                     down_lip_y = pt_pos[1]
-                if (i == 49):
+                if (i == 49):   # 입술 오른쪽 끝
                     right_lip_x = pt_pos[0]
                     right_lip_y = pt_pos[1]
-                if (i == 55):
+                if (i == 55):  # 입술 왼쪽 끝
                     left_lip_x = pt_pos[0]
                     left_lip_y = pt_pos[1]
                 cv.circle(img_frame, pt_pos, 2, (0, 255, 0), -1)
                 num = num + 1
 
+            # 출력 frame에 얼굴 모양을 사각형 선으로 출력
             cv.rectangle(img_frame, (face.left(), face.top()), (face.right(), face.bottom()),
                          (0, 0, 255), 3)
 
@@ -168,29 +174,32 @@ def startExam():
             gaze_str = str(gaze_ratio)
             cv.putText(img_frame, gaze_str, (0, 100), cv.FONT_HERSHEY_SCRIPT_SIMPLEX, 3, (0,255,0))
 
-            if gaze_ratio < 0.27 or gaze_ratio > 5.5: # ratio가 너무 낮으면 화면 밖 오른쪽, ratio가 너무 낮으면 화면 밖 왼쪽을 응시했다고 간주하고 알람
+            if gaze_ratio < 0.27 or gaze_ratio > 5.5:  # ratio가 너무 낮으면 화면 밖 오른쪽, ratio가 너무 낮으면 화면 밖 왼쪽을 응시했다고 간주하고 알람
                 alert(4)
 
 
-        # chin detect
+        # 고개 움직임 감지
         nose_to_eye_left_x = nose_x - left_eye_x
         nose_to_eye_left_y = nose_y - left_eye_y
         nose_to_eye_right_x = nose_x - right_eye_x
         nose_to_eye_right_y = nose_y - right_eye_y
-        norm_left = math.sqrt(nose_to_eye_left_x ** 2 + nose_to_eye_left_y ** 2)
-        norm_right = math.sqrt(nose_to_eye_right_x ** 2 + nose_to_eye_right_y ** 2)
+        norm_left = math.sqrt(nose_to_eye_left_x ** 2 + nose_to_eye_left_y ** 2)  # 코에서 왼쪽 눈으로 향하는 벡터
+        norm_right = math.sqrt(nose_to_eye_right_x ** 2 + nose_to_eye_right_y ** 2)  # 코에서 오른쪽 눈으로 향하는 벡터
+        
         if abs(norm_left - norm_right) >= 15:
             alert(2)
 
-        # mouth detect
+
+        # 입 모양 감지
         height = up_lip_y - down_lip_y
         width = right_lip_x - left_lip_x
-        ratio = height / width
-        if ratio > 0.8:
+        ratio = height / width  # 입술의 ratio=가로/세로
+        if ratio > 0.8:  # ratio>0.8이면 윗입술과 아랫입술이 떼어진 상태
             alert(3)
 
-        key = cv.waitKey(1)
 
+        # 입력 key받고 frame 출력
+        key = cv.waitKey(1)
         cv.imshow('result', img_frame)
 
         if key == 27:
