@@ -6,8 +6,8 @@ import tkinter.messagebox
 import math
 from datetime import datetime
 
-
-def askStartExam():  # [시험 시작] 프로그램 실행 시 시작 여부를 사용자에게 물어봄
+# [시험 시작] 버튼 클릭 시 프로그램 실행 시 시작 여부를 사용자에게 물어봄
+def askStartExam():
     MsgBox = tkinter.messagebox.askquestion("Message", "시험을 시작하시겠습니까?")
     if MsgBox == 'yes':
         startExam()
@@ -15,29 +15,34 @@ def askStartExam():  # [시험 시작] 프로그램 실행 시 시작 여부를 
         return
 
 
-def askFinishExam():  # [시험 종료] 시험을 종료시킴
+# [시험 종료] 버튼 클릭 시 시험을 종료시킴
+def askFinishExam():
     MsgBox = tkinter.messagebox.askquestion("Message", "시험을 종료하시겠습니까?")
     if MsgBox == 'yes':
         window.destroy()
 
 
-def alert(case):  # 부정행위 감지 시 alert
+# 부정행위 감지 시 alert
+def alert(case):
     now = datetime.now()
     if case == 1:
-        tkinter.messagebox.showinfo("Alert", "두 명 이상 감지되었습니다.")
+        #tkinter.messagebox.showinfo("Alert", "두 명 이상 감지되었습니다.")
         print("alert log[2명이상] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
     elif case == 2:
-        tkinter.messagebox.showinfo("Alert", "고개 돌림이 감지되었습니다.")
+        #tkinter.messagebox.showinfo("Alert", "고개 돌림이 감지되었습니다.")
         print("alert log[고개돌림] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
     elif case == 3:
-        tkinter.messagebox.showinfo("Alert", "대화가 감지되었습니다.")
+        #tkinter.messagebox.showinfo("Alert", "대화가 감지되었습니다.")
         print("alert log[대화] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
     elif case == 4:
         tkinter.messagebox.showinfo("Alert", "화면 밖 응시가 감지되었습니다.")
         print("alert log[화면 밖 응시] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
 
 
+
+# 얼굴에서 눈을 파악하여 공막과 각막의 위치를 확인하여 시선 계산
 def get_gaze_ratio(eye_points, facial_landmarks, frame, gray):
+    # 왼쪽 눈의 움직임 탐지 -> 양쪽 눈은 같이 움직이기 때문에, 한 쪽만 탐색
     left_eye_region = np.array([(facial_landmarks.part(eye_points[0]).x, facial_landmarks.part(eye_points[0]).y),
                                 (facial_landmarks.part(eye_points[1]).x, facial_landmarks.part(eye_points[1]).y),
                                 (facial_landmarks.part(eye_points[2]).x, facial_landmarks.part(eye_points[2]).y),
@@ -45,37 +50,42 @@ def get_gaze_ratio(eye_points, facial_landmarks, frame, gray):
                                 (facial_landmarks.part(eye_points[4]).x, facial_landmarks.part(eye_points[4]).y),
                                 (facial_landmarks.part(eye_points[5]).x, facial_landmarks.part(eye_points[5]).y)],
                                np.int32)
-    # cv2.polylines(frame, [left_eye_region], True, (0, 0, 255), 2)
 
-    height, width, _ = frame.shape
-    mask = np.zeros((height, width), np.uint8)
-    cv.polylines(mask, [left_eye_region], True, 255, 2)
-    cv.fillPoly(mask, [left_eye_region], 255)
-    eye = cv.bitwise_and(gray, gray, mask=mask)
+    # 기존 웹캠 이미지에서 eye point를 사용하여 눈 영역 남기고 모두 제거
+    height, width, _ = frame.shape  # frame 크기 저장 2차원 저장
+    mask = np.zeros((height, width), np.uint8)  # height x width 사이즈의 0행렬
+    cv.polylines(mask, [left_eye_region], True, 255, 2)  # mask 이미지에 왼쪽 눈 좌표에 Black 도형
+    cv.fillPoly(mask, [left_eye_region], 255)  # 왼쪽 눈 좌표에 맞는 색칠된 Black 도형
+    eye = cv.bitwise_and(gray, gray, mask=mask)  # gray 이미지에 눈만 칠해진 mask와 and연산을 해서 눈 이미지만 남김
 
+    # 왼쪽 눈의 각 꼭짓점 좌표 저장
     min_x = np.min(left_eye_region[:, 0])
     max_x = np.max(left_eye_region[:, 0])
     min_y = np.min(left_eye_region[:, 1])
     max_y = np.max(left_eye_region[:, 1])
-
     gray_eye = eye[min_y: max_y, min_x: max_x]
-    _, threshold_eye = cv.threshold(gray_eye, 70, 255, cv.THRESH_BINARY)
+
+    # 눈 이미지에서 동공과 나머지 눈 영역으로 이진화
+    _, threshold_eye = cv.threshold(gray_eye, 70, 255, cv.THRESH_BINARY)  # t값보다 크면 value, 작으면 0
     height, width = threshold_eye.shape
+
+    # 눈의 중앙을 기점으로, 왼쪽/오른족으로 나눠서 흰 부분의 비율 계산
     left_side_threshold = threshold_eye[0: height, 0: int(width / 2)]
     left_side_white = cv.countNonZero(left_side_threshold)
-
     right_side_threshold = threshold_eye[0: height, int(width / 2): width]
     right_side_white = cv.countNonZero(right_side_threshold)
 
-    if left_side_white == 0:
+    if left_side_white == 0:  # 왼쪽에 검은자만 있으면 ratio = 1(왼쪽 시선)
         gaze_ratio = 1
-    elif right_side_white == 0:
-        gaze_ratio = 5
+    elif right_side_white == 0:  # 오른쪽에 검은자만 있으면 ratio = 6(오른쪽 시선)
+        gaze_ratio = 6
     else:
         gaze_ratio = left_side_white / right_side_white
     return gaze_ratio
 
-def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로그램 시작
+
+# [시험 시작] 버튼 클릭 시 부정행위 감지 프로그램 시작
+def startExam():
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
     cap = cv.VideoCapture(0)
@@ -150,11 +160,15 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
             cv.rectangle(img_frame, (face.left(), face.top()), (face.right(), face.bottom()),
                          (0, 0, 255), 3)
 
+            # 눈 point를 사용하여 해당 위치에서 공막/각막의 위치로 시선 탐지
             gaze_ratio_left_eye = get_gaze_ratio([36, 37, 38, 39, 40, 41], shape, img_frame, img_gray)
             gaze_ratio_right_eye = get_gaze_ratio([42, 43, 44, 45, 46, 47], shape, img_frame, img_gray)
             gaze_ratio = (gaze_ratio_right_eye + gaze_ratio_left_eye) / 2
 
-            if gaze_ratio <= 0.8 or gaze_ratio > 3:
+            gaze_str = str(gaze_ratio)
+            cv.putText(img_frame, gaze_str, (0, 100), cv.FONT_HERSHEY_SCRIPT_SIMPLEX, 3, (0,255,0))
+
+            if gaze_ratio < 0.27 or gaze_ratio > 5.5: # ratio가 너무 낮으면 화면 밖 오른쪽, ratio가 너무 낮으면 화면 밖 왼쪽을 응시했다고 간주하고 알람
                 alert(4)
 
 
