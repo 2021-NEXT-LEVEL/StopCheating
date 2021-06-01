@@ -21,6 +21,10 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
     while True:
         ret, img_frame = cap.read()
         img_gray = cv.cvtColor(img_frame, cv.COLOR_BGR2GRAY)
+
+        # if detectWithHaar(img_gray, img_frame) > 1:
+        #     alert_flag = 1
+
         dets = detector(img_gray, 1)
 
         for face in dets:

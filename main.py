@@ -49,4 +49,12 @@ if __name__ == "__main__":
     btn_finish_exam = Button(base_frame, text="시험 종료", width="20", command=askFinishExam)
     btn_finish_exam.pack(pady="10")
 
+    info = "시험 시 주의 사항\n\n " \
+           "1. 해당 시험은 시험 참여인원, 시선처리, 얼굴 방향, 대화를 감지합니다.\n" \
+           "2. [시험 시작] 버튼을 눌러 시험을 시작합니다.\n" \
+           "3. 시험 도중 경고창이 뜨면 [확인] 버튼을 눌러 시험을 재진행 하십시오.\n" \
+           "4. 시험 종료 시 키보드에서 ESC을 누른 후, [시험 종료] 버튼을 눌러 정상 종료하십시오."
+    info_message = tkinter.messagebox.showinfo("Info", info)
+
     window.mainloop()
+

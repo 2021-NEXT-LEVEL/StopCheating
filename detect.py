@@ -38,3 +38,20 @@ def get_gaze_ratio(eye_points, facial_landmarks, frame, gray):
     else:
         gaze_ratio = left_side_white / right_side_white
     return gaze_ratio
+
+
+def detectWithHaar(img_gray, img_frame):
+    face_cascade = cv.CascadeClassifier(
+        '/opt/homebrew/Cellar/opencv/4.5.2_1/data/haarcascades/haarcascade_frontalcatface.xml')
+    # For Windows users
+    # "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_alt.xml";
+
+    count = 0
+    faces = face_cascade.detectMultiScale(img_gray, 1.3, 5)
+
+    for (x, y, w, h) in faces:
+        cv.rectangle(img_frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        count += 1
+        print(count)
+
+    return count
