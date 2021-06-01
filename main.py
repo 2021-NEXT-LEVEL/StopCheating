@@ -61,6 +61,7 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
     while True:
         ret, frame = cap.read()
         img_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        gaze = GazeTracking()
         dets = detector(img_gray, 1)
         
         text = ""
