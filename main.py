@@ -3,6 +3,7 @@ import cv2 as cv
 import numpy as np
 from tkinter import *
 import tkinter.messagebox
+import math
 from datetime import datetime
 
 
@@ -21,10 +22,14 @@ def askFinishExam():  # [시험 종료] 시험을 종료시킴
 
 
 def alert(case):  # 부정행위 감지 시 alert
+    now = datetime.now()
     if case == 1:
         tkinter.messagebox.showinfo("Alert", "두 명 이상 감지되었습니다.")
-    now = datetime.now()
-    print("alert log : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
+        print("alert log[2명이상] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
+    elif case == 2:
+        tkinter.messagebox.showinfo("Alert", "고개 돌림이 감지되었습니다.")
+        print("alert log[고개돌림] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
+
 
 
 def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로그램 시작
