@@ -58,13 +58,43 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
                 list_points.append([p.x, p.y])
 
             list_points = np.array(list_points)
-
+            num = 0
+            left_eye_x = 0
+            left_eye_y = 0
+            right_eye_x = 0
+            right_eye_y = 0
+            
             for i, pt in enumerate(list_points[index]):
                 pt_pos = (pt[0], pt[1])
+                if num == 29:
+                    nose_x = pt_pos[0]
+                    nose_y = pt_pos[1]
+                if num == 37 or num == 40:
+                    left_eye_x = left_eye_x + pt_pos[0]
+                    left_eye_y = left_eye_y + pt_pos[1]
+                if num == 41:
+                    left_eye_x = left_eye_x // 2
+                    left_eye_y = left_eye_y // 2
+                if num == 44 or num == 47:
+                    right_eye_x = right_eye_x + pt_pos[0]
+                    right_eye_y = right_eye_y + pt_pos[1]
+                if num == 48 :
+                    right_eye_x = right_eye_x // 2
+                    right_eye_y = right_eye_y // 2
                 cv.circle(img_frame, pt_pos, 2, (0, 255, 0), -1)
+                num=num+1
 
             cv.rectangle(img_frame, (face.left(), face.top()), (face.right(), face.bottom()),
                          (0, 0, 255), 3)
+            nose_to_eye_left_x = nose_x - left_eye_x
+            nose_to_eye_left_y = nose_y - left_eye_y
+            nose_to_eye_right_x = nose_x - right_eye_x
+            nose_to_eye_right_y = nose_y - right_eye_y
+            norm_left = math.sqrt(nose_to_eye_left_x**2 + nose_to_eye_left_y**2)
+            norm_right = math.sqrt(nose_to_eye_right_x ** 2 + nose_to_eye_right_y ** 2)
+            if abs(norm_left - norm_right) >= 20:
+                alert(2)
+            
         key = cv.waitKey(1)
 
         cv.imshow('result', img_frame)
