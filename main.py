@@ -1,15 +1,11 @@
 import dlib
-import numpy as np
 import cv2 as cv
-from gaze_tracking import GazeTracking  # 눈동자 추적 library
-import tkinter
+import numpy as np
 from tkinter import *
-from tkinter import messagebox
-from datetime import datetime
+import tkinter.messagebox
 import math
+from datetime import datetime
 
-eye_r_count = 0
-eye_l_count = 0
 
 def askStartExam():  # [시험 시작] 프로그램 실행 시 시작 여부를 사용자에게 물어봄
     MsgBox = tkinter.messagebox.askquestion("Message", "시험을 시작하시겠습니까?")
@@ -36,7 +32,48 @@ def alert(case):  # 부정행위 감지 시 alert
     elif case == 3:
         tkinter.messagebox.showinfo("Alert", "대화가 감지되었습니다.")
         print("alert log[대화] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
+    elif case == 4:
+        tkinter.messagebox.showinfo("Alert", "화면 밖 응시가 감지되었습니다.")
+        print("alert log[화면 밖 응시] : %s년 %s월 %s일 %s시 %s분 %s초.%s" % (now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond))
 
+
+def get_gaze_ratio(eye_points, facial_landmarks, frame, gray):
+    left_eye_region = np.array([(facial_landmarks.part(eye_points[0]).x, facial_landmarks.part(eye_points[0]).y),
+                                (facial_landmarks.part(eye_points[1]).x, facial_landmarks.part(eye_points[1]).y),
+                                (facial_landmarks.part(eye_points[2]).x, facial_landmarks.part(eye_points[2]).y),
+                                (facial_landmarks.part(eye_points[3]).x, facial_landmarks.part(eye_points[3]).y),
+                                (facial_landmarks.part(eye_points[4]).x, facial_landmarks.part(eye_points[4]).y),
+                                (facial_landmarks.part(eye_points[5]).x, facial_landmarks.part(eye_points[5]).y)],
+                               np.int32)
+    # cv2.polylines(frame, [left_eye_region], True, (0, 0, 255), 2)
+
+    height, width, _ = frame.shape
+    mask = np.zeros((height, width), np.uint8)
+    cv.polylines(mask, [left_eye_region], True, 255, 2)
+    cv.fillPoly(mask, [left_eye_region], 255)
+    eye = cv.bitwise_and(gray, gray, mask=mask)
+
+    min_x = np.min(left_eye_region[:, 0])
+    max_x = np.max(left_eye_region[:, 0])
+    min_y = np.min(left_eye_region[:, 1])
+    max_y = np.max(left_eye_region[:, 1])
+
+    gray_eye = eye[min_y: max_y, min_x: max_x]
+    _, threshold_eye = cv.threshold(gray_eye, 70, 255, cv.THRESH_BINARY)
+    height, width = threshold_eye.shape
+    left_side_threshold = threshold_eye[0: height, 0: int(width / 2)]
+    left_side_white = cv.countNonZero(left_side_threshold)
+
+    right_side_threshold = threshold_eye[0: height, int(width / 2): width]
+    right_side_white = cv.countNonZero(right_side_threshold)
+
+    if left_side_white == 0:
+        gaze_ratio = 1
+    elif right_side_white == 0:
+        gaze_ratio = 5
+    else:
+        gaze_ratio = left_side_white / right_side_white
+    return gaze_ratio
 
 def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로그램 시작
     detector = dlib.get_frontal_face_detector()
@@ -55,48 +92,18 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
 
     index = ALL
 
-    up_lip_x, up_lip_y, down_lip_x, down_lip_y = 0, 0, 0, 0;
-    right_lip_x, right_lip_y, left_lip_x, left_lip_y = 0, 0, 0, 0;
+    up_lip_x, up_lip_y, down_lip_x, down_lip_y = 0, 0, 0, 0
+    right_lip_x, right_lip_y, left_lip_x, left_lip_y = 0, 0, 0, 0
 
     while True:
-        ret, frame = cap.read()
-        img_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        gaze = GazeTracking()
+        ret, img_frame = cap.read()
+        img_gray = cv.cvtColor(img_frame, cv.COLOR_BGR2GRAY)
         dets = detector(img_gray, 1)
-        
-        text = ""
-
-        # gazeTracking에서 frame분석 후 저장
-        gaze.refresh(frame)
-        frame = gaze.annotated_frame()
-
-        # 분석된 gaze frame 바탕으로 눈동자 방향 분석 후 출력
-        if gaze.is_blinking():
-            text = "Blinking"
-        elif gaze.is_right():
-            text = "right"
-            eye_r_count = eye_r_count + 1
-            if eye_r_count >= 5: # 5 frame 이상 쳐다보면
-                alert("right")
-        elif gaze.is_left():
-            text = "left"
-            eye_l_count = eye_l_count + 1
-            if eye_l_count >= 5:
-                alert("left")
-        elif gaze.is_center():
-            text = "center"
-        cv.putText(frame, text, (90, 60), cv.FONT_HERSHEY_DUPLEX, 1.6, (147, 58, 31), 2)
-
-        # 눈동자 위치 출력
-        left_pupil = gaze.pupil_left_coords()
-        right_pupil = gaze.pupil_right_coords()
-        cv.putText(frame, "Left pupil:  " + str(left_pupil), (90, 130), cv.FONT_HERSHEY_DUPLEX, 0.9, (147, 58, 31), 1)
-        cv.putText(frame, "Right pupil: " + str(right_pupil), (90, 165), cv.FONT_HERSHEY_DUPLEX, 0.9, (147, 58, 31), 1)
 
         for face in dets:
             if len(dets) > 1:  # case == 1 -> 두 명 이상 감지
                 alert(1)
-            shape = predictor(frame, face)  # 얼굴에서 68개 점 찾기
+            shape = predictor(img_frame, face)  # 얼굴에서 68개 점 찾기
             list_points = []
             for p in shape.parts():
                 list_points.append([p.x, p.y])
@@ -137,12 +144,19 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
                 if (i == 55):
                     left_lip_x = pt_pos[0]
                     left_lip_y = pt_pos[1]
-
-                cv.circle(frame, pt_pos, 2, (0, 255, 0), -1)
+                cv.circle(img_frame, pt_pos, 2, (0, 255, 0), -1)
                 num = num + 1
 
-            cv.rectangle(frame, (face.left(), face.top()), (face.right(), face.bottom()),
+            cv.rectangle(img_frame, (face.left(), face.top()), (face.right(), face.bottom()),
                          (0, 0, 255), 3)
+
+            gaze_ratio_left_eye = get_gaze_ratio([36, 37, 38, 39, 40, 41], shape, img_frame, img_gray)
+            gaze_ratio_right_eye = get_gaze_ratio([42, 43, 44, 45, 46, 47], shape, img_frame, img_gray)
+            gaze_ratio = (gaze_ratio_right_eye + gaze_ratio_left_eye) / 2
+
+            if gaze_ratio <= 0.8 or gaze_ratio > 3:
+                alert(4)
+
 
         # chin detect
         nose_to_eye_left_x = nose_x - left_eye_x
@@ -155,18 +169,31 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
             alert(2)
 
         # mouth detect
-        height = up_lip_y - down_lip_y;
-        width = right_lip_x - left_lip_x;
-        ratio = height / width;
-        print("ratio: ",ratio);
+        height = up_lip_y - down_lip_y
+        width = right_lip_x - left_lip_x
+        ratio = height / width
         if ratio > 0.8:
             alert(3)
-            
+
         key = cv.waitKey(1)
-        cv.imshow('result', frame)
+
+        cv.imshow('result', img_frame)
+
         if key == 27:
             break
-            
+        elif key == ord('1'):
+            index = ALL
+        elif key == ord('2'):
+            index = LEFT_EYEBROW + RIGHT_EYEBROW
+        elif key == ord('3'):
+            index = LEFT_EYE + RIGHT_EYE
+        elif key == ord('4'):
+            index = NOSE
+        elif key == ord('5'):
+            index = MOUTH_OUTLINE + MOUTH_INNER
+        elif key == ord('6'):
+            index = JAWLINE
+
     cap.release()
 
 
