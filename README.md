@@ -11,24 +11,23 @@
 
 👨‍👩‍👧‍👧만든 사람(Collaborator)
      
-     
-    🧑🏻동국대학교 컴퓨터공학과 2019111980 길유정(Gil yujung)
+    👩‍💻동국대학교 컴퓨터공학과 2019111980 길유정(Gil yujung)
        -고개 움직임 감지부분 구현
        -kuj9628@naver.com
        -https://github.com/fairyroad
        
-    🧑🏻동국대학교 컴퓨터공학과 2019112004 김민정
+    🎅🏻동국대학교 컴퓨터공학과 2019112004 김민정
        -시선처리부분 구현
        -kimmin9624@dgu.ac.kr
        -https://github.com/kimminje0ng
-       
-    🧑🏻동국대학교 컴퓨터공학과 2019112017 강혜원
+      
+    👰동국대학교 컴퓨터공학과 2019112017 강혜원
        -2명이상 감지부분 구현
        -부정행위감지되었을 때 알림창 및 시험 시작 및 종료 알림창 부분 구현
        -gpffps369@gmail.com
        -https://github.com/HyewonKkang
        
-    🧑🏻동국대학교 컴퓨터공학과 2019112010 장수아
+    👩‍🚀동국대학교 컴퓨터공학과 2019112010 장수아
        -입모양움직임으로 대화감지 부분 구현
        -sooa9918@dgu.ac.kr
        -https://github.com/sua1223
