@@ -22,10 +22,16 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
         ret, img_frame = cap.read()
         img_gray = cv.cvtColor(img_frame, cv.COLOR_BGR2GRAY)
         dets = detector(img_gray, 1)
+        
+        # Algorithm 2 - face detection using Haar Cascade
+        # if detectWithHaar(img_gray, img_frame) > 1:
+        #    alert_flag = 1
 
         for face in dets:
+            # Algorithm 1 - face detection using Dlib Face Landmark
             if len(dets) > 1:  # case == 1 -> 두 명 이상 감지
                 alert_flag = 1
+            
             shape = predictor(img_frame, face)  # 얼굴에서 68개 점 찾기
             list_points = []
             for p in shape.parts():
