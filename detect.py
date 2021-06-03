@@ -47,10 +47,11 @@ def detectWithHaar(img_gray, img_frame):
     # "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_alt.xml";
 
     count = 0
-    faces = face_cascade.detectMultiScale(img_gray, 1.3, 5)
+    cv.equalizeHist(img_gray, img_gray)
+    faces = face_cascade.detectMultiScale(img_gray, 1.1, 3)
 
     for (x, y, w, h) in faces:
-        cv.rectangle(img_frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        cv.rectangle(img_frame, (x, y), (x + w, y + h), (255, 0, 0), 3, 4, 0)
         count += 1
         print(count)
 
