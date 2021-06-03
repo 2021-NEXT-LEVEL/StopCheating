@@ -21,10 +21,6 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
     while True:
         ret, img_frame = cap.read()
         img_gray = cv.cvtColor(img_frame, cv.COLOR_BGR2GRAY)
-
-        # if detectWithHaar(img_gray, img_frame) > 1:
-        #     alert_flag = 1
-
         dets = detector(img_gray, 1)
 
         for face in dets:
@@ -44,6 +40,7 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
 
             for i, pt in enumerate(list_points[index]):
                 pt_pos = (pt[0], pt[1])
+                # chin detect points
                 if num == 29:
                     nose_x = pt_pos[0]
                     nose_y = pt_pos[1]
@@ -59,16 +56,17 @@ def startExam():  # [시험 시작] 버튼 클릭 시 부정행위 감지 프로
                 if num == 48:
                     right_eye_x = right_eye_x // 2
                     right_eye_y = right_eye_y // 2
-                if (i == 52):
+                # mouth detect points
+                if i == 51:
                     up_lip_x = pt_pos[0]
                     up_lip_y = pt_pos[1]
-                if (i == 58):
+                if i == 57:
                     down_lip_x = pt_pos[0]
                     down_lip_y = pt_pos[1]
-                if (i == 49):
+                if i == 48:
                     right_lip_x = pt_pos[0]
                     right_lip_y = pt_pos[1]
-                if (i == 55):
+                if i == 54:
                     left_lip_x = pt_pos[0]
                     left_lip_y = pt_pos[1]
                 cv.circle(img_frame, pt_pos, 2, (0, 255, 0), -1)
